@@ -48,7 +48,7 @@ class BlackjackGame {
             surrenderAllowed: true,
             insuranceAllowed: true,
             minBet: 10,
-            maxBet: 1000
+            maxBet: 9999999999
         };
 
         // Statistics
