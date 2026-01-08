@@ -3,8 +3,13 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="color-scheme" content="dark">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#080810">
     <title>Vanilla - Blackjack Practice</title>
     <meta name="description" content="Practice blackjack with Vanilla - fair shuffling and strategy training.">
 
@@ -270,9 +275,57 @@
                 <div class="toggle active" id="toggle-sound"></div>
             </div>
 
+            <div class="setting-row">
+                <span>Auto-Win on 21</span>
+                <div class="toggle active" id="toggle-autowin21"></div>
+            </div>
+
             <button class="btn-secondary" id="btn-reset-stats">
                 <i class="fa-solid fa-trash-can"></i> Reset Statistics
             </button>
+        </div>
+    </div>
+
+    <!-- Add Chips Modal -->
+    <div class="modal-backdrop" id="addchips-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Add Chips</h2>
+                <button class="modal-close" id="btn-close-addchips">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="addchips-grid">
+                <button class="addchips-btn" data-amount="1000">
+                    <span class="addchips-amount">$1,000</span>
+                </button>
+                <button class="addchips-btn" data-amount="5000">
+                    <span class="addchips-amount">$5,000</span>
+                </button>
+                <button class="addchips-btn" data-amount="10000">
+                    <span class="addchips-amount">$10,000</span>
+                </button>
+                <button class="addchips-btn" data-amount="50000">
+                    <span class="addchips-amount">$50,000</span>
+                </button>
+                <button class="addchips-btn" data-amount="100000">
+                    <span class="addchips-amount">$100,000</span>
+                </button>
+                <button class="addchips-btn" data-amount="1000000">
+                    <span class="addchips-amount">$1,000,000</span>
+                </button>
+            </div>
+
+            <div class="addchips-custom">
+                <label class="setting-label">Custom Amount</label>
+                <div class="custom-input-row">
+                    <span class="currency-prefix">$</span>
+                    <input type="number" id="custom-chips-amount" class="setting-input" placeholder="Enter amount"
+                        min="1">
+                    <button class="btn-primary" id="btn-add-custom-chips">Add</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -280,6 +333,7 @@
     <div class="toast-container" id="toast-container"></div>
 
     <!-- Scripts -->
+    <script src="js/sounds.js"></script>
     <script src="js/deck.js"></script>
     <script src="js/game.js"></script>
     <script src="js/ui.js"></script>
