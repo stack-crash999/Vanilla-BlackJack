@@ -47,7 +47,8 @@ class BlackjackGame {
             resplitAces: false,
             surrenderAllowed: true,
             insuranceAllowed: true,
-            minBet: 10,
+            autoWinOn21: true,  // Auto-win when player hits exactly 21
+            minBet: 0,
             maxBet: 9999999999
         };
 
@@ -91,8 +92,8 @@ class BlackjackGame {
             return false;
         }
 
-        if (amount < this.settings.minBet || amount > this.settings.maxBet) {
-            console.warn(`Bet must be between ${this.settings.minBet} and ${this.settings.maxBet}`);
+        if (amount < 1 || amount > this.settings.maxBet) {
+            console.warn(`Bet must be at least $1`);
             return false;
         }
 
@@ -186,6 +187,10 @@ class BlackjackGame {
         await this.dealCardToHand(this.currentHand, true);
 
         if (this.currentHand.isBusted) {
+            await this.handleHandComplete();
+        } else if (this.settings.autoWinOn21 && this.currentHand.getValue() === 21) {
+            // Auto-win on 21: automatically stand and proceed
+            this.currentHand.isStood = true;
             await this.handleHandComplete();
         }
 

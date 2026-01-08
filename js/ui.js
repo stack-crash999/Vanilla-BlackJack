@@ -93,9 +93,16 @@ class BlackjackUI {
             settingDealerH17: document.getElementById('setting-dealer-h17'),
             toggleHints: document.getElementById('toggle-hints'),
             toggleSound: document.getElementById('toggle-sound'),
+            toggleAutoWin21: document.getElementById('toggle-autowin21'),
 
             btnAddChips: document.getElementById('btn-add-chips'),
             btnResetStats: document.getElementById('btn-reset-stats'),
+
+            // Add Chips Modal
+            addChipsModal: document.getElementById('addchips-modal'),
+            btnCloseAddChips: document.getElementById('btn-close-addchips'),
+            customChipsAmount: document.getElementById('custom-chips-amount'),
+            btnAddCustomChips: document.getElementById('btn-add-custom-chips'),
 
             betChips: document.getElementById('bet-chips'),
             betAmountDisplay: document.getElementById('bet-amount-display')
@@ -167,9 +174,42 @@ class BlackjackUI {
             this.saveUIPreferences();
         });
 
+        this.elements.toggleAutoWin21?.addEventListener('click', () => {
+            const isActive = this.elements.toggleAutoWin21.classList.toggle('active');
+            this.game.updateSettings({ autoWinOn21: isActive });
+        });
+
+        // Add Chips Modal
         this.elements.btnAddChips?.addEventListener('click', () => {
-            this.game.addChips(10000);
-            this.showToast('Added $10,000');
+            this.openAddChipsModal();
+        });
+
+        this.elements.btnCloseAddChips?.addEventListener('click', () => {
+            this.closeAddChipsModal();
+        });
+
+        this.elements.addChipsModal?.addEventListener('click', (e) => {
+            if (e.target === this.elements.addChipsModal) this.closeAddChipsModal();
+        });
+
+        // Add chips buttons
+        document.querySelectorAll('.addchips-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const amount = parseInt(btn.dataset.amount);
+                this.game.addChips(amount);
+                this.showToast(`Added $${amount.toLocaleString()}`);
+                this.playSound('chip');
+                this.closeAddChipsModal();
+            });
+        });
+
+        // Custom amount
+        this.elements.btnAddCustomChips?.addEventListener('click', () => {
+            this.addCustomChips();
+        });
+
+        this.elements.customChipsAmount?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') this.addCustomChips();
         });
 
         this.elements.btnResetStats?.addEventListener('click', () => {
@@ -305,8 +345,8 @@ class BlackjackUI {
     // Game Actions
     async handleDeal() {
         const bet = this.getCurrentBet();
-        if (bet < this.game.settings.minBet) {
-            this.showToast(`Minimum bet is $${this.game.settings.minBet}`, 'error');
+        if (bet < 1) {
+            this.showToast('Place a bet to play', 'error');
             return;
         }
 
@@ -459,7 +499,7 @@ class BlackjackUI {
         if (this.elements.playingControls) this.elements.playingControls.style.display = isPlaying ? '' : 'none';
         if (this.elements.gameoverControls) this.elements.gameoverControls.style.display = isGameOver ? '' : 'none';
 
-        if (this.elements.btnDeal) this.elements.btnDeal.disabled = bet < this.game.settings.minBet;
+        if (this.elements.btnDeal) this.elements.btnDeal.disabled = bet < 1;
 
         // Disable chips/quick bets when not betting
         document.querySelectorAll('.chip, .quick-btn').forEach(el => {
@@ -574,6 +614,33 @@ class BlackjackUI {
     openSettings() { this.elements.settingsModal?.classList.add('visible'); }
     closeSettings() { this.elements.settingsModal?.classList.remove('visible'); }
 
+    openAddChipsModal() {
+        this.elements.addChipsModal?.classList.add('visible');
+        if (this.elements.customChipsAmount) {
+            this.elements.customChipsAmount.value = '';
+        }
+    }
+
+    closeAddChipsModal() {
+        this.elements.addChipsModal?.classList.remove('visible');
+    }
+
+    addCustomChips() {
+        const input = this.elements.customChipsAmount;
+        if (!input) return;
+
+        const amount = parseInt(input.value);
+        if (isNaN(amount) || amount < 1) {
+            this.showToast('Please enter a valid amount', 'error');
+            return;
+        }
+
+        this.game.addChips(amount);
+        this.showToast(`Added $${amount.toLocaleString()}`);
+        this.playSound('chip');
+        this.closeAddChipsModal();
+    }
+
     showToast(message, type = 'success') {
         const container = document.getElementById('toast-container');
         if (!container) return;
@@ -593,35 +660,28 @@ class BlackjackUI {
     playSound(type) {
         if (!this.soundEnabled) return;
 
-        if (!this.audioContext) {
-            try { this.audioContext = new (window.AudioContext || window.webkitAudioContext)(); }
-            catch { return; }
+        // Use the new realistic casino sounds system
+        if (window.casinoSounds) {
+            window.casinoSounds.setEnabled(true);
+
+            switch (type) {
+                case 'card':
+                    window.casinoSounds.playCardDeal();
+                    break;
+                case 'chip':
+                    window.casinoSounds.playChipClick();
+                    break;
+                case 'win':
+                    window.casinoSounds.playWin();
+                    break;
+                case 'lose':
+                    window.casinoSounds.playLose();
+                    break;
+                case 'shuffle':
+                    window.casinoSounds.playShuffle();
+                    break;
+            }
         }
-
-        const osc = this.audioContext.createOscillator();
-        const gain = this.audioContext.createGain();
-        osc.connect(gain);
-        gain.connect(this.audioContext.destination);
-
-        const sounds = {
-            card: [800, 0.025, 0.03],
-            chip: [1200, 0.025, 0.02],
-            win: [523.25, 0.05, 0.25],
-            lose: [300, 0.03, 0.1]
-        };
-
-        const [freq, vol, dur] = sounds[type] || [440, 0.02, 0.05];
-        osc.frequency.value = freq;
-        gain.gain.value = vol;
-        if (type === 'lose') osc.type = 'sawtooth';
-        osc.start();
-
-        if (type === 'win') {
-            setTimeout(() => osc.frequency.value = 659.25, 70);
-            setTimeout(() => osc.frequency.value = 783.99, 140);
-        }
-
-        osc.stop(this.audioContext.currentTime + dur);
     }
 
     handleKeyboard(e) {
@@ -692,6 +752,9 @@ class BlackjackUI {
         }
         if (this.elements.settingDealerH17) {
             this.elements.settingDealerH17.classList.toggle('active', this.game.settings.dealerHitsSoft17);
+        }
+        if (this.elements.toggleAutoWin21) {
+            this.elements.toggleAutoWin21.classList.toggle('active', this.game.settings.autoWinOn21);
         }
         if (this.elements.settingDeckCount) {
             this.elements.settingDeckCount.value = this.game.settings.deckCount;
